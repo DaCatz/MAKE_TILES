@@ -156,7 +156,7 @@ class MAKE_TILES{
     if($this->debug)echo "resize from ".$this->original_image_width."x".$this->original_image_height." to ".$this->tile_size*pow(2,$this->max_zoom)."x".$this->tile_size*pow(2,$this->max_zoom)." (new width/height: $new_width/$new_height | gaps: $width_gap/$height_gap)<br />";
     $resized_img=imagecreatetruecolor($this->tile_size*pow(2,$this->max_zoom),$this->tile_size*pow(2,$this->max_zoom)); //create new squared image by tile_size * (2 ^ max_zoom)
     $result=imagecopyresampled($resized_img,$this->original_image,$width_gap/2,$height_gap/2,0,0,$new_width,$new_height,$this->original_image_width,$this->original_image_height);
-    if($this->debug)imagepng($resized_img,"../../img/make_tiles/resized.png");
+    if($this->debug)imagepng($resized_img,"$this->output_dir/resized.png");
     if($result){
       $this->original_image=$resized_img; //set new resized image object
       $this->original_image_width=$this->original_image_height=$this->tile_size*pow(2,$this->max_zoom); //set new resized width and height
