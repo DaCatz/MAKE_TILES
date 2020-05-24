@@ -24,7 +24,14 @@ require_once("../../inc/make_tiles/MAKE_TILES.inc.php");
 
 //create instance...
 $MAKE_TILES=new MAKE_TILES();
+$MAKE_TILES->set_debug(true);
+$MAKE_TILES->set_output_dir("../../img/make_tiles");
+$MAKE_TILES->set_tile_size(256);
 
 //make tiles from image...
-$MAKE_TILES->from_image("../../img/make_tiles/tiles_4096.png");
+#$MAKE_TILES->from_image("../../img/make_tiles/tiles_4096.png"); //test with already squared and size fitted image
+#$MAKE_TILES->from_image("../../img/make_tiles/tiles_3000.png"); //test with already squared image but differenz size (for 256 tiles)
+#$MAKE_TILES->from_image("../../img/make_tiles/tiles_3065x4096.png"); //test with portrait image
+#$MAKE_TILES->from_image("../../img/make_tiles/tiles_4096x3065.png"); //test with landscape image
+$MAKE_TILES->from_image("../../img/make_tiles/tiles_2040x3070.png"); //test with portrait image and none fitted size
 ?>
