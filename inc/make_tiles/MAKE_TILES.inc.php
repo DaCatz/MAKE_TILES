@@ -143,7 +143,7 @@ class MAKE_TILES{
     }else if($original_image_ratio>1){ //it's landscape, long side is original_image_width
       $this->max_zoom=ceil(sqrt($this->original_image_width/$this->tile_size)); //round up to next tile_size multiple
       $new_width=$this->tile_size*pow(2,$this->max_zoom);
-      $new_height=round($new_width*$original_image_ratio);
+      $new_height=round($new_width/$original_image_ratio);
       $width_gap=0; //because the new width will be full resized
       $height_gap=$new_width-$new_height; //gap between multiple tile_size height      
     }else{ //it's portrait, long side is original_image_height
