@@ -54,9 +54,10 @@ class MAKE_TILES{
   protected $original_image_mime;
   protected $original_image_width;
   protected $original_image_height;
-  protected $min_tile_size;
-  protected $zoom;
+  protected $tile_size;
+  protected $max_zoom;
   protected $output_dir;
+  private $debug;
   
   public function __construct(){
     $this->original_image=null;
@@ -64,11 +65,51 @@ class MAKE_TILES{
     $this->original_image_mime="";
     $this->original_image_width=0;
     $this->original_image_height=0;
-    $this->min_tile_size=256;
-    $this->zoom=0;
+    $this->tile_size=256; //default tile size e.g. for maps
+    $this->max_zoom=0;
     $this->output_dir="../../img/make_tiles";
+    $this->debug=false; //no default debug output
   }
   
+  /**
+   * MAKE_TILES::set_debug()
+   * set debug to true or false 
+   * @param bool $debug
+   * @return bool
+   */
+  public function set_debug($debug){
+    $this->debug=$debug;
+    return true;
+  }
+  
+  /**
+   * MAKE_TILES::set_tile_size()
+   * set tile size in even pixel (e.g. 128, 256, 512 px ...)
+   * @param mixed $tile_size
+   * @return
+   */
+  public function set_tile_size($tile_size){
+    $this->tile_size=$tile_size;
+    return true;
+  }
+  
+  /**
+   * MAKE_TILES::set_output_dir()
+   * set tiles output directory
+   * @param string $output_dir
+   * @return bool
+   */
+  public function set_output_dir($output_dir){
+    $this->output_dir=$output_dir;
+    return true;
+  }
+  
+  /**
+   * MAKE_TILES::from_image()
+   * make tiles from image $original_image_path
+   * @param string $original_image_path
+   * @return bool
+   */
   public function from_image($original_image_path){
     if(!file_exists($original_image_path))return false; //file does not exist!?
     $this->original_image_path=$original_image_path;
@@ -77,8 +118,8 @@ class MAKE_TILES{
     $this->original_image_width=$result_array[0];
     $this->original_image_height=$result_array[1];
     $this->original_image_mime=$result_array["mime"];
-    $this->create_image(); //create image object and make it square and increase to next multiple-min_tile_size
-    $this->split_image(); //split down to min_tile_size
+    $this->create_image(); //create image object and make it square and increase to next multiple-tile_size
+    $this->split_image(); //split down to tile_size
     return true;
   }
   
@@ -91,28 +132,37 @@ class MAKE_TILES{
     }else{
       return false; //mime not supported
     }
-    //make it square to multiple-min_tile_size (min_tile_size*2)...
+    //make it square to multiple-tile_size (tile_size*2)...
     $original_image_ratio=$this->original_image_width/$this->original_image_height; //1 square, >1 landscape, <1 portrait 
     if($original_image_ratio==1){ //it's already square, use original_image_width, check if resize needed
-      $tile_size_ratio=ceil(sqrt($this->original_image_width/$this->min_tile_size)); //round up to next min_tile_size multiple (min_tile_size * 2 ^ tile_size_ratio)
-      if($this->original_image_width==$this->min_tile_size*pow(2,$tile_size_ratio))return true; //no resize needed :)
-    }else if($original_image_ratio>1){ //it's landscape, use original_image_width
-      $tile_size_ratio=ceil(sqrt($this->original_image_width/$this->min_tile_size)); //round up to next min_tile_size multiple
-      $width_gap=0;
-      $height_gap=$this->min_tile_size*pow(2,$tile_size_ratio)-$this->original_image_height; //gap between multiple min_tile_size height
-    }else{ //it's portrait, use original_image_height
-      $tile_size_ratio=ceil(sqrt($this->original_image_height/$this->min_tile_size)); //round up to next min_tile_size multiple
-      $width_gap=$this->min_tile_size*pow(2,$tile_size_ratio)-$this->original_image_width; //gap between multiple min_tile_size width
-      $height_gap=0;
+      $this->max_zoom=ceil(sqrt($this->original_image_width/$this->tile_size)); //round up to next tile_size multiple tile_size * (2 ^ max_zoom)
+      if($this->original_image_width==$this->tile_size*pow(2,$this->max_zoom))return true; //no resize needed :)
+      $new_width=$this->tile_size*pow(2,$this->max_zoom);
+      $new_height=round($new_width*$original_image_ratio);
+      $width_gap=$height_gap=0;
+    }else if($original_image_ratio>1){ //it's landscape, long side is original_image_width
+      $this->max_zoom=ceil(sqrt($this->original_image_width/$this->tile_size)); //round up to next tile_size multiple
+      $new_width=$this->tile_size*pow(2,$this->max_zoom);
+      $new_height=round($new_width*$original_image_ratio);
+      $width_gap=0; //because the new width will be full resized
+      $height_gap=$new_width-$new_height; //gap between multiple tile_size height      
+    }else{ //it's portrait, long side is original_image_height
+      $this->max_zoom=ceil(sqrt($this->original_image_height/$this->tile_size)); //round up to next tile_size multiple
+      $new_height=$this->tile_size*pow(2,$this->max_zoom);
+      $new_width=round($new_height*$original_image_ratio);
+      $width_gap=$new_height-$new_width; //gap between multiple tile_size width
+      $height_gap=0; //because the new height will be full resized
     }
-    $resized_img=imagecreate($this->min_tile_size*pow(2,$tile_size_ratio),$this->min_tile_size*pow(2,$tile_size_ratio));
-    $result=imagecopyresampled($resized_img,$this->original_image,$width_gap/2,$height_gap/2,0,0,$this->min_tile_size*pow(2,$tile_size_ratio),$this->min_tile_size*pow(2,$tile_size_ratio),$this->original_image_width,$this->original_image_height);
+    if($this->debug)echo "resize from ".$this->original_image_width."x".$this->original_image_height." to ".$this->tile_size*pow(2,$this->max_zoom)."x".$this->tile_size*pow(2,$this->max_zoom)." (new width/height: $new_width/$new_height | gaps: $width_gap/$height_gap)<br />";
+    $resized_img=imagecreatetruecolor($this->tile_size*pow(2,$this->max_zoom),$this->tile_size*pow(2,$this->max_zoom)); //create new squared image by tile_size * (2 ^ max_zoom)
+    $result=imagecopyresampled($resized_img,$this->original_image,$width_gap/2,$height_gap/2,0,0,$new_width,$new_height,$this->original_image_width,$this->original_image_height);
+    if($this->debug)imagepng($resized_img,"../../img/make_tiles/resized.png");
     if($result){
       $this->original_image=$resized_img; //set new resized image object
-      $this->original_image_width=$this->original_image_height=$this->min_tile_size*pow(2,$tile_size_ratio); //set new resized width and height
+      $this->original_image_width=$this->original_image_height=$this->tile_size*pow(2,$this->max_zoom); //set new resized width and height
       return true;
     }else{
-      echo "something went wront in create_image()"; //hmm, need more to explain why!?
+      if($this->debug)echo "something went wront in create_image()"; //hmm, need more to explain why!?
       return false;
     }
   }
@@ -121,21 +171,24 @@ class MAKE_TILES{
     if($img==null && $this->original_image===null)return false; //there is no image_object to split => why!?
     if($img==null)$img=$this->original_image; //use original image_object => normally before recursive request
     if($size==0)$size=$this->original_image_width; //use original image width => normally before recursive request
-    echo "[split|$img|$size|$zoom]<br />";
-    $img_tile=imagecreate($this->min_tile_size,$this->min_tile_size); //create tile image object
+    if($this->debug)echo "[split|$img|$size|$zoom]<br />";
+    $img_tile=imagecreatetruecolor($this->tile_size,$this->tile_size); //create tile image object
     $max_split_step=pow(4,$zoom); // 1, 4, 16, 64, ...
     $runtime=microtime(true); //start measure runtime
     for($split_step_x=0;$split_step_x<sqrt($max_split_step);$split_step_x++){ //sqrt($max_split_step) split steps in x-direction from left to right
       $src_x=$split_step_x*$size;
       for($split_step_y=0;$split_step_y<sqrt($max_split_step);$split_step_y++){ //sqrt($max_split_step) split steps in x-direction from left to right
         $src_y=$split_step_y*$size;
-        echo "($split_step_x*$split_step_y|$src_x*$src_y)";
-        $result=imagecopyresampled($img_tile,$img,0,0,$src_x,$src_y,$this->min_tile_size,$this->min_tile_size,$size,$size); //resize tile to min_tile_size
+        if($this->debug){
+          echo "($split_step_x*$split_step_y|$src_x*$src_y)";
+          flush();
+        }
+        $result=imagecopyresampled($img_tile,$img,0,0,$src_x,$src_y,$this->tile_size,$this->tile_size,$size,$size); //resize tile to tile_size
         $this->save_tile($img_tile,$zoom,$split_step_x,$split_step_y); //save tile based folder/name scheme
       }
     }
-    echo "<br />runtime: ".((microtime(true)-$runtime)*1000)." ms<hr />";
-    if($size>$this->min_tile_size)$this->split_image($img,$size/2,$zoom+1); //recursive split_image => next zoom level
+    if($this->debug)echo "<br />runtime: ".((microtime(true)-$runtime)*1000)." ms<hr />";
+    if($size>$this->tile_size)$this->split_image($img,$size/2,$zoom+1); //recursive split_image => next zoom level
     return true;
   }
   
@@ -143,7 +196,7 @@ class MAKE_TILES{
     //create folder structure...
     if(!file_exists("$this->output_dir/$zoom"))mkdir("$this->output_dir/$zoom");
     if(!file_exists("$this->output_dir/$zoom/$x"))mkdir("$this->output_dir/$zoom/$x");
-    //save as png...
+    //save as png ...
     imagepng($img,"$this->output_dir/$zoom/$x/$y.png");
     return true;
   }
