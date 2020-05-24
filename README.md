@@ -4,6 +4,7 @@ PHP class which makes squared image tiles from original images for use e.g. in m
 ## Installation
 * checkout repository (files with folder structure)
 * you need a PHP installation with GD2 extension enabled (https://www.php.net/manual/de/image.installation.php)
+* make sure, your webserver or user has write permissions to the default tiles output folder img/make_tiles
 * run the test script php/make_tiles/make_tiles.php in your browser or at console
 
 ## Implement in your application
