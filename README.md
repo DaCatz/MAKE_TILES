@@ -10,6 +10,7 @@ PHP class which makes squared image tiles from original images for use e.g. in m
 * link class file with "require_once('path/to/classes/MAKE_TILES.inc.php');
 * create object instance with "$MAKE_TILES=new MAKE_TILES();"
 * make tiles with "$MAKE_TILES->from_image("path/to/original_image");
+* the default output folder for tiles is img/make_tiles
 
 You can change some class attributes:
 * t.b.d
