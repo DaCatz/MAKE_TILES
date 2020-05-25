@@ -17,3 +17,6 @@ You can change some class attributes:
 * $MAKE_TILES->set_debug(true); if you want more debug output
 * $MAKE_TILES->set_output_dir("../../img/make_tiles"); to define your output directory
 * $MAKE_TILES->set_tile_size(256); to set your tile size in pixels (should be even ;)
+
+If debug is set to true, you will also get a "resized.png" in root of the output dir to see on which resized image base the tiles will be splitted.
+All tiles will be saved as PNG with system default quality (php default is 6, see https://www.php.net/manual/de/function.imagepng.php).
