@@ -16,7 +16,7 @@
     
 * @author Oliver Strecke
 * @copyright 2020
-* @version $Id$
+* @version $Id: MAKE_TILES.inc.php 3671 2020-05-25 00:11:42Z OSt $
 
 * e.g. min tile size = 256 px
 * e.g. resize original 3000x4096 => 4096x4096 (make square first, center horizontal)
