@@ -14,4 +14,6 @@ PHP class which makes squared image tiles from original images for use e.g. in m
 * the default output folder for tiles is img/make_tiles
 
 You can change some class attributes:
-* t.b.d
+* $MAKE_TILES->set_debug(true); if you want more debug output
+* $MAKE_TILES->set_output_dir("../../img/make_tiles"); to define your output directory
+* $MAKE_TILES->set_tile_size(256); to set your tile size (should be even ;)
