@@ -16,7 +16,7 @@
     
 * @author Oliver Strecke
 * @copyright 2020
-* @version $Id$
+* @version $Id: make_tiles.php 3671 2020-05-25 00:11:42Z OSt $
 */
  
 //load class...
