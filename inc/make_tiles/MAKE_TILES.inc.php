@@ -16,7 +16,7 @@
     
 * @author Oliver Strecke
 * @copyright 2020
-* @version $Id: MAKE_TILES.inc.php 3671 2020-05-25 00:11:42Z OSt $
+* @version $Id: MAKE_TILES.inc.php 3676 2020-06-12 20:12:41Z OSt $
 
 * e.g. min tile size = 256 px
 * e.g. resize original 3000x4096 => 4096x4096 (make square first, center horizontal)
@@ -72,21 +72,19 @@ class MAKE_TILES{
   }
   
   /**
-   * MAKE_TILES::set_debug()
-   * set debug to true or false 
-   * @param bool $debug
-   * @return bool
+   * MAKE_TILES::get_size()
+   * returns the size of the squared resized orignal image
+   * @return integer
    */
-  public function set_debug($debug){
-    $this->debug=$debug;
-    return true;
+  public function get_size(){
+    return $this->original_image_width; //it's the same like $this->original_image_height because it's squared ;)
   }
-  
+    
   /**
    * MAKE_TILES::set_tile_size()
    * set tile size in even pixel (e.g. 128, 256, 512 px ...)
    * @param mixed $tile_size
-   * @return
+   * @return bool
    */
   public function set_tile_size($tile_size){
     $this->tile_size=$tile_size;
@@ -101,6 +99,17 @@ class MAKE_TILES{
    */
   public function set_output_dir($output_dir){
     $this->output_dir=$output_dir;
+    return true;
+  }
+  
+  /**
+   * MAKE_TILES::set_debug()
+   * set debug to true or false 
+   * @param bool $debug
+   * @return bool
+   */
+  public function set_debug($debug){
+    $this->debug=$debug;
     return true;
   }
   
@@ -123,6 +132,15 @@ class MAKE_TILES{
     return true;
   }
   
+  /**
+   * MAKE_TILES::create_image()
+   * 1. create an image from png or jpeg
+   * 2. calculate max_zoom (original_image_width/tile_size)
+   * 3. resize (tile_size * 2^max_zoom)
+   * 4. create gaps
+   * 5. set background_color
+   * @return bool
+   */
   private function create_image(){
     //create image object...
     if($this->original_image_mime=="image/png"){
@@ -155,6 +173,10 @@ class MAKE_TILES{
     }
     if($this->debug)echo "resize from ".$this->original_image_width."x".$this->original_image_height." to ".$this->tile_size*pow(2,$this->max_zoom)."x".$this->tile_size*pow(2,$this->max_zoom)." (new width/height: $new_width/$new_height | gaps: $width_gap/$height_gap)<br />";
     $resized_img=imagecreatetruecolor($this->tile_size*pow(2,$this->max_zoom),$this->tile_size*pow(2,$this->max_zoom)); //create new squared image by tile_size * (2 ^ max_zoom)
+    //edit by Merion
+    $white = imagecolorallocate($resized_img, 255, 255, 255); //fill whole image with white color
+    imagefill($resized_img, 0, 0, $white);  //Line 1
+    //end edit by Merion
     $result=imagecopyresampled($resized_img,$this->original_image,$width_gap/2,$height_gap/2,0,0,$new_width,$new_height,$this->original_image_width,$this->original_image_height);
     if($this->debug)imagepng($resized_img,"$this->output_dir/resized.png");
     if($result){
@@ -167,6 +189,14 @@ class MAKE_TILES{
     }
   }
   
+  /**
+   * MAKE_TILES::split_image()
+   * split image zoom-level by zoom-level into tile_size tiles
+   * @param image $img
+   * @param integer $size
+   * @param integer $zoom
+   * @return bool
+   */
   private function split_image($img=null,$size=0,$zoom=0){
     if($img==null && $this->original_image===null)return false; //there is no image_object to split => why!?
     if($img==null)$img=$this->original_image; //use original image_object => normally before recursive request
@@ -192,6 +222,15 @@ class MAKE_TILES{
     return true;
   }
   
+  /**
+   * MAKE_TILES::save_tile()
+   * saves as PNG image by output_dir/zoom/x/y.png
+   * @param image $img
+   * @param integer $zoom
+   * @param integer $x
+   * @param integer $y
+   * @return bool
+   */
   private function save_tile($img,$zoom,$x,$y){
     //create folder structure...
     if(!file_exists("$this->output_dir/$zoom"))mkdir("$this->output_dir/$zoom");
